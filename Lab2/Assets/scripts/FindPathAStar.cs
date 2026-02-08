@@ -89,7 +89,7 @@ public class FindPathAStar : MonoBehaviour
         startNode = new PathMarker(new MapLocation(1, 1),
             0.0f, 0.0f, 0.0f, Instantiate(start, startLocation, Quaternion.identity), null);
 
-        Vector3 endLocation = new Vector3(Random.Range(5, 8), 0.5f, Random.Range(5, 8));
+        Vector3 endLocation = new Vector3(Random.Range(1, 8), 0.5f, Random.Range(5, 8));
         goalNode = new PathMarker(new MapLocation((int)endLocation.x, (int)endLocation.z),
             0.0f, 0.0f, 0.0f, Instantiate(end, endLocation, Quaternion.identity), null);
 
@@ -107,7 +107,7 @@ public class FindPathAStar : MonoBehaviour
         {
 
             done = true;
-
+            ReconstructPath();
             return;
         }
 
@@ -183,14 +183,15 @@ public class FindPathAStar : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.P))
         {
-
             BeginSearch();
             hasStarted = true;
+            StartCoroutine(Searching());
         }
 
 
-        if (hasStarted)
-            if (Input.GetKeyDown(KeyCode.C)) Search(lastPos);
+        //if (hasStarted)
+        //    if (Input.GetKeyDown(KeyCode.C)) Search(lastPos);
+
     }
 
     // The coroutine function
@@ -205,20 +206,24 @@ public class FindPathAStar : MonoBehaviour
             Debug.Log("Coroutine is running...");
             Search(lastPos);
             // Wait for the next frame
-            //            yield return true;
+            yield return true;
         }
 
         searchingHasFinished = true;
-        yield return null;
+
 
         Debug.Log("Coroutine finished!");
+
+        StartCoroutine(MovePlayer()); //move player to path
+        yield return null;
     }
 
     bool PathHasConstructed = false;
     List<PathMarker> path = new List<PathMarker>();
+
     void ReconstructPath()
     {
-
+        //take path with most promisiong values and add these to path list
         path.Add(closed[closed.Count - 1]);
         var p = closed[closed.Count - 1].parent;
         while (p != startNode)
@@ -230,6 +235,23 @@ public class FindPathAStar : MonoBehaviour
         PathHasConstructed = true;
 
 
+    }
+
+    IEnumerator MovePlayer()
+    {
+        foreach (PathMarker p in path)
+        {
+            startNode.marker.transform.position =
+                new Vector3(
+                    p.location.x * maze.scale,
+                    0.5f,
+                    p.location.z * maze.scale
+                );
+            Debug.Log("step to target");
+            yield return new WaitForSeconds(1f);
+        }
+        Debug.Log("path created");
+        yield return null;
     }
 
 }
